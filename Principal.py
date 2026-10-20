@@ -43,13 +43,15 @@ while True:
         else:
             print("La ruta ingresada no existe")
     elif opt == "4":
-        ruta = input("Ingrese la ruta del archivo TXT de Telemetria: ").strip()
+        ruta = input("Ingrese la ruta del archivo TXT de Telemetria: ")
         if os.path.exists(ruta):
-            pac_id, telemetria_datos = extraer_telemetria(ruta)
-            if pac_id not in GLOBAL_CLINICAL_DB:
-                GLOBAL_CLINICAL_DB[pac_id] = {}
-            GLOBAL_CLINICAL_DB[pac_id]["telemetria"] = telemetria_datos
-            print(f"Telemetria cargada para el paciente: {pac_id}")
+            nuevo = extraer_telemetria(ruta)
+            for id, registros in nuevo.items():
+                if id in GLOBAL_CLINICAL_DB:
+                    GLOBAL_CLINICAL_DB[id].extend(registros)
+                else:
+                    GLOBAL_CLINICAL_DB[id] = registros
+            print(f"Telemetria cargada correctamente para {ruta}")
         else:
             print("La ruta ingresada no existe")
     elif opt == "5":
