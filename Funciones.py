@@ -9,7 +9,7 @@ os.makedirs("sistema_uci/exportaciones_csv", exist_ok=True)
 GLOBAL_CLINICAL_DB = {}
 
 def extraer_hl7(ruta_archivo):
-    with open(ruta_archivo, "r") as f:
+    with open(ruta_archivo, "r", encoding = "utf-8") as f:
         lineas = f.readlines()
     datos = {}
     for linea in lineas:
@@ -26,7 +26,7 @@ def extraer_hl7(ruta_archivo):
 def extraer_signos_vitales(ruta_archivo):
     tree = ET.parse(ruta_archivo)
     root = tree.getroot()
-    paciente_id = " "
+    paciente_id = "na"
     paciente_ref = root.find(".//Observation/subject/reference")
     if paciente_ref is not None and paciente_ref.text:
         partes_ref = paciente_ref.text
@@ -48,7 +48,7 @@ def extraer_signos_vitales(ruta_archivo):
 def extraer_diagnostico(ruta_archivo):
     tree = ET.parse(ruta_archivo)
     root = tree.getroot()
-    paciente_id = " "
+    paciente_id = "na"
     paciente_ref = root.find(".//DiagnosticReport/patientId")
     if paciente_ref is not None and paciente_ref.text:
         partes_ref = paciente_ref.text
@@ -63,23 +63,24 @@ def extraer_diagnostico(ruta_archivo):
     return paciente_id, datos
 
 def extraer_telemetria(ruta_archivo):
+    with open(r"C:\Users\hnnas\Downloads\pacientes_p3\log_telemetria_3.txt", "r", encoding = "utf-8") as file:
+    linea = file.readlines()
     datos = {}
-    paciente_id = " "
-    with open(ruta_archivo, "r") as f:
-        lineas = f.readlines()
-        datos = lineas.strip("|")
-    for linea in datos:
-        fecha_hora = linea[0]
-        id = linea[1]
-        sensor = linea[2]
-        valor = linea[3]
-        estado = linea[4]
-        datos["Fecha/hora"] = fecha_hora.strip()
-        datos["id_paciente"] = id.strip()
-        datos["sensor"] = sensor.strip()
-        datos["valor"] = valor.strip()
-        datos["estado"] = estado.strip()
-    return paciente_id, datos
+    for lineas in linea:
+        if lineas.strip():
+            fecha_hora, id, sensor, valor, estado = lineas.strip().split("|")
+            fecha, hora = fecha_hora.split(" ")
+            inf = {
+                "Fecha": fecha.strip(),
+                "Hora": hora.strip(),
+                "Sensor": sensor.strip(),
+                "Valor": valor.strip(),
+                "Estado": estado.strip()
+            }
+        if id not in datos:
+            datos[id] = []
+        datos[id].append(inf)
+    return datos
 
 def exportar_informacion():
     csv_path = "sistema_uci/exportaciones_csv/signos_vitales_consolidados.csv"
