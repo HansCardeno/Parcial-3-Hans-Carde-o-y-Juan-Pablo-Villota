@@ -27,13 +27,13 @@ def extraer_signos_vitales(ruta_archivo):
     tree = ET.parse(ruta_archivo)
     root = tree.getroot()
     paciente_id = " "
-    paciente_ref = root.find(".//subject/reference")
+    paciente_ref = root.find(".//Observation/subject/reference")
     if paciente_ref is not None and paciente_ref.text:
-        partes_ref = paciente_ref.text.split("/")
+        partes_ref = paciente_ref.text
         if len(partes_ref) > 1:
             paciente_id = partes_ref[1].strip()
     datos = []
-    for obs in root.findall(".//Observation"):
+    for obs in root.findall(".//Observation/vitalSigns"):
         nombre = obs.find(".//code/coding/display")
         valor = obs.find(".//valueQuantity/value")
         unidad = obs.find(".//valueQuantity/unit")
@@ -49,32 +49,36 @@ def extraer_diagnostico(ruta_archivo):
     tree = ET.parse(ruta_archivo)
     root = tree.getroot()
     paciente_id = " "
-    paciente_ref = root.find(".//subject/reference")
+    paciente_ref = root.find(".//DiagnosticReport/patientId")
     if paciente_ref is not None and paciente_ref.text:
-        partes_ref = paciente_ref.text.split("/")
-        if len(partes_ref) > 1:
-            paciente_id = partes_ref[1].strip()
+        partes_ref = paciente_ref.text
+        paciente_id = partes_ref.strip()
     datos = {}
-    categoria = root.find(".//category/coding/display")
-    conclusion = root.find(".//conclusion")
-    medico = root.find(".//resultsInterpreter/display")
-    datos["Categoria"] = categoria.text.strip() if categoria is not None else "N/A"
-    datos["Conclusion"] = conclusion.text.strip() if conclusion is not None else "N/A"
-    datos["Medico"] = medico.text.strip() if medico is not None else "N/A"
+    categoria = root.find(".//DiagnosticReport/category")
+    conclusion = root.find(".//DiagnosticReport/conclusion")
+    medico = root.find(".//DiagnosticReport/physician")
+    datos["Categoria"] = categoria.text.strip() if categoria is not None else "Dato no registrado"
+    datos["Conclusion"] = conclusion.text.strip() if conclusion is not None else "Dato no registrado"
+    datos["Medico"] = medico.text.strip() if medico is not None else "Dato no registrado"
     return paciente_id, datos
 
 def extraer_telemetria(ruta_archivo):
     datos = {}
-    paciente_id = "Desconocido"
+    paciente_id = " "
     with open(ruta_archivo, "r") as f:
         lineas = f.readlines()
-    for linea in lineas:
-        if linea.startswith("TEL"):
-            campos = linea.split("|")
-            paciente_id = campos[1].strip()
-            datos["sensor"] = campos[2].strip()
-            datos["valor"] = float(campos[3].strip())
-            datos["estado"] = campos[4].strip()
+        datos = lineas.strip("|")
+    for linea in datos:
+        fecha_hora = linea[0]
+        id = linea[1]
+        sensor = linea[2]
+        valor = linea[3]
+        estado = linea[4]
+        datos["Fecha/hora"] = fecha_hora.strip()
+        datos["id_paciente"] = id.strip()
+        datos["sensor"] = sensor.strip()
+        datos["valor"] = valor.strip()
+        datos["estado"] = estado.strip()
     return paciente_id, datos
 
 def exportar_informacion():
